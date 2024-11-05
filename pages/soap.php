@@ -15,10 +15,12 @@
         .form-group {
             margin-bottom: 15px;
             text-align: left;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         .form-group label {
             display: block;
             margin-bottom: 5px;
+            color: #fff; 
         }
         .form-group input[type="text"],
         .form-group input[type="number"],
@@ -26,6 +28,14 @@
             width: 100%;
             padding: 8px;
             margin: 5px 0 10px;
+            background-color: #1b1f22; 
+            border: 1px solid #ddd;
+            color: #fff; 
+            border-radius: 4px;
+        }
+        .form-group input[type="checkbox"] {
+            margin-right: 10px; 
+            accent-color: #fff; 
         }
         .button {
             padding: 10px 20px;
@@ -38,22 +48,40 @@
 <?php
 // SOAP kliens beállítások
 $options = array(
-    "location" => "http://localhost/soapserver.php",
-    "uri" => "http://localhost/soapserver.php",
+    "location" => "http://hujbermate.nhely.hu/soapserver.php",
+    "uri" => "http://hujbermate.nhely.hu/soapserver.php",
     'keep_alive' => false,
 );
 
 try {
     $client = new SoapClient(null, $options);
 
-    // Eredmény tárolására szolgáló változó
+    // Eredmény tárolásáa
     $result = "";
 
     // Filmek listázása
-    if (isset($_POST['listFilms'])) {
-        $films = $client->__soapCall("getFilms", array());
-        $result .= "<h3>Filmek:</h3><pre>" . print_r($films, true) . "</pre>";
+if (isset($_POST['listFilms'])) {
+    $films = $client->__soapCall("getFilms", array());
+
+    // Táblázat generálása
+    $result .= "<h3>Filmek:</h3>";
+    $result .= "<table border='1' cellpadding='5' cellspacing='0' style='width:100%; text-align: left;'>";
+    $result .= "<tr><th>ID</th><th>Cím</th><th>Gyártási év</th><th>Hossz (perc)</th><th>Bemutató dátuma</th><th>YouTube elérhetőség</th></tr>";
+
+    foreach ($films as $film) {
+        $result .= "<tr>";
+        $result .= "<td>" . htmlspecialchars($film['id']) . "</td>";
+        $result .= "<td>" . htmlspecialchars($film['cim']) . "</td>";
+        $result .= "<td>" . htmlspecialchars($film['gyartas']) . "</td>";
+        $result .= "<td>" . htmlspecialchars($film['hossz']) . "</td>";
+        $result .= "<td>" . htmlspecialchars($film['bemutato']) . "</td>";
+        $result .= "<td>" . ($film['youtube'] ? "Elérhető" : "Nem elérhető") . "</td>";
+        $result .= "</tr>";
     }
+
+    $result .= "</table>";
+}
+
 
     // Film hozzáadása
     if (isset($_POST['addFilm'])) {
@@ -61,22 +89,53 @@ try {
         $gyartas = (int)$_POST['gyartas'];
         $hossz = (int)$_POST['hossz'];
         $bemutato = $_POST['bemutato'];
-        $youtube = isset($_POST['youtube']) ? 1 : 0;
+        $youtube = (int)$_POST['youtube']; // 1, ha "Elérhető", 0 ha "Nem elérhető"
         $isAdded = $client->__soapCall("addFilm", array($cim, $gyartas, $hossz, $bemutato, $youtube));
         $result .= $isAdded ? "Film hozzáadva!" : "Hiba történt a film hozzáadása során.";
     }
 
     // Feladatok listázása
-    if (isset($_POST['listTasks'])) {
-        $tasks = $client->__soapCall("getTasks", array());
-        $result .= "<h3>Feladatok:</h3><pre>" . print_r($tasks, true) . "</pre>";
+if (isset($_POST['listTasks'])) {
+    $tasks = $client->__soapCall("getTasks", array());
+
+    // Táblázat generálása az eredményekből
+    $result .= "<h3>Feladatok:</h3>";
+    $result .= "<table border='1' cellpadding='5' cellspacing='0' style='width:100%; text-align: left;'>";
+    $result .= "<tr><th>ID</th><th>Film ID</th><th>Személy ID</th><th>Megnevezés</th></tr>";
+
+    foreach ($tasks as $task) {
+        $result .= "<tr>";
+        $result .= "<td>" . htmlspecialchars($task['id']) . "</td>";
+        $result .= "<td>" . htmlspecialchars($task['filmid']) . "</td>";
+        $result .= "<td>" . htmlspecialchars($task['szemelyid']) . "</td>";
+        $result .= "<td>" . htmlspecialchars($task['megnevezes']) . "</td>";
+        $result .= "</tr>";
     }
 
+    $result .= "</table>";
+}
+
+
     // Személyek listázása
-    if (isset($_POST['listPeople'])) {
-        $people = $client->__soapCall("getPeople", array());
-        $result .= "<h3>Személyek:</h3><pre>" . print_r($people, true) . "</pre>";
+if (isset($_POST['listPeople'])) {
+    $people = $client->__soapCall("getPeople", array());
+
+    // Táblázat generálása az eredményekből
+    $result .= "<h3>Személyek:</h3>";
+    $result .= "<table border='1' cellpadding='5' cellspacing='0' style='width:100%; text-align: left;'>";
+    $result .= "<tr><th>ID</th><th>Név</th><th>Nem</th></tr>";
+
+    foreach ($people as $person) {
+        $result .= "<tr>";
+        $result .= "<td>" . htmlspecialchars($person['id']) . "</td>";
+        $result .= "<td>" . htmlspecialchars($person['nev']) . "</td>";
+        $result .= "<td>" . htmlspecialchars($person['nem']) . "</td>";
+        $result .= "</tr>";
     }
+
+    $result .= "</table>";
+}
+
     
 } catch (SoapFault $e) {
     $result = "SOAP hiba: " . $e->getMessage();
@@ -111,8 +170,11 @@ try {
             <input type="date" name="bemutato" required>
         </div>
         <div class="form-group">
-            <label>YouTube elérhetőség:</label>
-            <input type="checkbox" name="youtube" value="1"> Elérhető
+        <label>YouTube elérhetőség:</label><br>
+        <input type="radio" name="youtube" value="1" id="youtubeYes" required>
+        <label for="youtubeYes">Elérhető</label><br>
+        <input type="radio" name="youtube" value="0" id="youtubeNo" required>
+        <label for="youtubeNo">Nem elérhető</label>
         </div>
         <input type="submit" name="addFilm" value="Film hozzáadása" class="button primary">
     </form>

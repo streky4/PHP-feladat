@@ -1,5 +1,8 @@
 <?php
-include_once 'db.php';
+include_once 'includes/db.php';
+
+error_reporting(0);
+ini_set('display_errors', '0');
 
 class FilmService {
     private $conn;
@@ -122,7 +125,7 @@ class FilmService {
 }
 
 $options = array(
-    'uri' => 'http://localhost/feladat/soapServer.php'
+    'uri' => 'http://hujbermate.nhely.hu/soapserver.php'
 );
 $server = new SoapServer(null, $options);
 $server->setClass('FilmService');
