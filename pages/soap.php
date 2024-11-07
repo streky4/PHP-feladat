@@ -41,9 +41,26 @@
             padding: 10px 20px;
             margin-top: 10px;
         }
+        .back-button {
+            display: block;               
+    width: max-content;           
+    padding: 10px 20px;
+    margin: 20px auto;            
+    color: white;
+    background-color: #1b1f22;
+    border-radius: 5px;
+    text-decoration: none;
+    text-align: center;           
+        }
+        .back-button:hover {
+            background-color: #28a745;
+        }
     </style>
 </head>
 <body>
+
+
+<a href="../index.php" class="back-button">Vissza a főoldalra</a>
 
 <?php
 // SOAP kliens beállítások
