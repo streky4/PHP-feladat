@@ -39,18 +39,16 @@
             text-align: center;
             border: 1px solid #ccc;
         }
-
-        
         .back-button {
             display: block;               
-    width: max-content;           
-    padding: 10px 20px;
-    margin: 20px auto;            
-    color: white;
-    background-color: #1b1f22;
-    border-radius: 5px;
-    text-decoration: none;
-    text-align: center;           
+            width: max-content;           
+            padding: 10px 20px;
+            margin: 20px auto;            
+            color: white;
+            background-color: #1b1f22;
+            border-radius: 5px;
+            text-decoration: none;
+            text-align: center;           
         }
         .back-button:hover {
             background-color: #28a745;
@@ -59,12 +57,9 @@
 </head>
 <body>
 
-
 <a href="../index.php" class="back-button">Vissza a főoldalra</a>
 
 <h1>Deviza Árfolyam Lekérdezés</h1>
-
-
 
 <!-- Napi deviza lekérdezés űrlap -->
 <form method="post">
@@ -171,11 +166,17 @@
 
         $client = new SoapClient("http://www.mnb.hu/arfolyamok.asmx?WSDL");
 
-        
+        // Megadjuk mindkét devizát a lekérdezéshez
         $result = $client->GetExchangeRates([ 
             'startDate' => $startDate,
             'endDate' => $endDate,
-            'currencyNames' => $devizak_honap[1]
+            'currencyNames' => $devizak_honap[0] . "," . $devizak_honap[1]  // Mindkét devizát küldjük
+        ]);
+
+        // Grafikon adat inicializálása
+        $jsData = json_encode([
+            "labels" => [],
+            "data" => []
         ]);
 
         // Ha van válasz, megjelenítjük az adatokat
@@ -205,53 +206,35 @@
                 ]);
             } else {
                 echo "<p>Nincs válasz az MNB-től a megadott hónapra.</p>";
-                $jsData = json_encode([
-                    "labels" => [],
-                    "data" => []
-                ]);
             }
         } else {
             echo "<p>Nincs válasz az MNB-től, kérlek próbáld újra később.</p>";
-            $jsData = json_encode([
-                "labels" => [],
-                "data" => []
-            ]);
         }
     }
     ?>
 </div>
 
-<!-- Grafikon megjelenítése -->
-<div>
-  <canvas id="myChart"></canvas>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-  const ctx = document.getElementById('myChart');
-  const chartData = <?php echo $jsData; ?>; // A PHP-ből származó grafikon adatok
+    const jsData = <?php echo $jsData; ?>;
 
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: chartData.labels,
-      datasets: [{
-        label: 'Deviza Árfolyam',
-        data: chartData.data,
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-        fill: false
-      }]
-    },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: false
-        }
-      }
+    if (jsData.labels.length > 0) {
+        const ctx = document.createElement("canvas");
+        document.querySelector(".result").appendChild(ctx);
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: jsData.labels,
+                datasets: [{
+                    label: 'Árfolyam',
+                    data: jsData.data,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            }
+        });
     }
-  });
 </script>
+
 </body>
 </html>
